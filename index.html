@@ -52,7 +52,7 @@ header h1{color:#fff;font-size:1.1rem;flex:1}
 .ex-q{color:#6b7280;font-size:.95rem}
 
 /* ANSWER AREA */
-.ans-area{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.ans-area{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
 .ans-base{width:72px;height:52px;font-size:1.5rem;text-align:center;border:2px solid #e5e7eb;border-radius:8px;color:var(--dark);font-weight:700;background:#f3f4f6}
 .ans-exp{width:58px;height:40px;font-size:1.2rem;text-align:center;border:2px solid #e5e7eb;border-radius:8px;color:var(--dark);font-weight:700}
 .ans-sep{font-size:1.8rem;color:var(--dark);font-weight:700;line-height:52px}
@@ -60,6 +60,8 @@ header h1{color:#fff;font-size:1.1rem;flex:1}
 .frac-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
 .frac-inp{width:80px;height:42px;font-size:1.2rem;text-align:center;border:2px solid #e5e7eb;border-radius:8px;color:var(--dark);font-weight:700}
 .frac-line{width:80px;height:2px;background:var(--dark)}
+.ans-arrow{font-size:1.6rem;color:#9ca3af;align-self:center}
+.ans-preview{display:flex;align-items:center;justify-content:center;min-width:80px;opacity:.85}
 
 /* VIRTUAL KEYBOARD */
 .vkb{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;max-width:300px}
@@ -297,7 +299,9 @@ function buildAnswer(ex){
   if(ex.type==='pow'){
     a.innerHTML=`<input class="ans-base" id="aBase" value="${ex.base}" readonly>
       <span class="ans-sep">^</span>
-      <input class="ans-exp" id="aExp" placeholder="?" readonly>`;
+      <input class="ans-exp" id="aExp" placeholder="?" readonly>
+      <span class="ans-arrow">→</span>
+      <span class="ans-preview" id="ansPreview">${pw(ex.base,'?')}</span>`;
     S.focus='exp';
   } else if(ex.type==='num'){
     a.innerHTML=`<input class="ans-num" id="aNum" placeholder="?" readonly>`;
@@ -307,6 +311,10 @@ function buildAnswer(ex){
       <input class="frac-inp" id="aFNum" placeholder="?" readonly style="border-color:var(--pink)">
       <div class="frac-line"></div>
       <input class="frac-inp" id="aFDen" placeholder="?" readonly>
+    </div>
+    <span class="ans-arrow">→</span>
+    <div class="ans-preview" id="ansPreview">
+      <div class="frac-wrap"><span class="pb" style="font-size:1.6rem">?</span><div class="frac-line"></div><span class="pb" style="font-size:1.6rem">?</span></div>
     </div>`;
     S.focus='fnum';
   }
@@ -338,6 +346,20 @@ function kp(k){
   if(k==='⌫') el.value=el.value.slice(0,-1);
   else if(k==='-'){ el.value=el.value===''?'-':(el.value==='-'?'':''); }
   else el.value+=k;
+  updatePreview();
+}
+
+function updatePreview(){
+  const ex=S.exs[S.cur]; if(!ex) return;
+  const prev=document.getElementById('ansPreview'); if(!prev) return;
+  if(ex.type==='pow'){
+    const expVal=document.getElementById('aExp')?.value||'';
+    prev.innerHTML=pw(ex.base, expVal===''?'?':expVal);
+  } else if(ex.type==='frac'){
+    const num=document.getElementById('aFNum')?.value||'';
+    const den=document.getElementById('aFDen')?.value||'';
+    prev.innerHTML=`<div class="frac-wrap"><span class="pb" style="font-size:1.6rem">${num||'?'}</span><div class="frac-line"></div><span class="pb" style="font-size:1.6rem">${den||'?'}</span></div>`;
+  }
 }
 function clearAns(){ ['aExp','aNum','aFNum','aFDen'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''}); }
 function switchFrac(){
