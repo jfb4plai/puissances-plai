@@ -198,12 +198,34 @@ header h1{color:#fff;font-size:1.1rem;flex:1}
 <div class="modal-ov" id="loginModal">
   <div class="modal">
     <h2>🔐 Accès Enseignant</h2>
-    <input type="email" id="lEmail" placeholder="Email">
-    <input type="password" id="lPwd" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
-    <div class="m-err" id="lErr"></div>
-    <div class="m-btns">
-      <button class="btn-cl" onclick="closeLogin()">Annuler</button>
-      <button class="btn-ok" onclick="doLogin()">Connexion</button>
+    <div id="lLoginSection">
+      <input type="email" id="lEmail" placeholder="Email">
+      <input type="password" id="lPwd" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="m-err" id="lErr"></div>
+      <div class="m-btns">
+        <button class="btn-cl" onclick="closeLogin()">Annuler</button>
+        <button class="btn-ok" onclick="doLogin()">Connexion</button>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <button style="font-size:12px;background:none;border:none;color:#6b7280;cursor:pointer;text-decoration:underline" onclick="showResetSection()">Mot de passe oublié ?</button>
+      </div>
+    </div>
+    <div id="lResetSection" style="display:none">
+      <p style="font-size:13px;color:#6b7280;margin-bottom:10px">Entre ton email pour recevoir un lien de réinitialisation.</p>
+      <input type="email" id="lResetEmail" placeholder="Email">
+      <div class="m-err" id="lResetMsg" style="color:#059669"></div>
+      <div class="m-btns">
+        <button class="btn-cl" onclick="hideResetSection()">Annuler</button>
+        <button class="btn-ok" onclick="sendReset()">Envoyer</button>
+      </div>
+    </div>
+    <div id="lNewPwdSection" style="display:none">
+      <p style="font-size:13px;color:#6b7280;margin-bottom:10px">Choisis un nouveau mot de passe.</p>
+      <input type="password" id="lNewPwd" placeholder="Nouveau mot de passe (6 car. min.)">
+      <div class="m-err" id="lNewPwdErr"></div>
+      <div class="m-btns">
+        <button class="btn-ok" onclick="saveNewPassword()">Enregistrer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -476,6 +498,42 @@ async function doSignOut(){
   await _sb.auth.signOut();
   document.getElementById('tPanel').classList.remove('open');
 }
+function showResetSection(){
+  document.getElementById('lLoginSection').style.display='none';
+  document.getElementById('lResetSection').style.display='block';
+  document.getElementById('lResetEmail').value=document.getElementById('lEmail').value;
+}
+function hideResetSection(){
+  document.getElementById('lResetSection').style.display='none';
+  document.getElementById('lLoginSection').style.display='block';
+}
+async function sendReset(){
+  const email=document.getElementById('lResetEmail').value.trim();
+  const msg=document.getElementById('lResetMsg');
+  if(!email){msg.style.color='#dc2626';msg.textContent='Entre ton email d\'abord.';return;}
+  const{error}=await _sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+  if(error){msg.style.color='#dc2626';msg.textContent=error.message;return;}
+  msg.style.color='#059669';msg.textContent='Email envoyé ! Vérifie ta boîte mail.';
+}
+async function saveNewPassword(){
+  const pwd=document.getElementById('lNewPwd').value.trim();
+  const err=document.getElementById('lNewPwdErr');
+  if(pwd.length<6){err.textContent='6 caractères minimum.';return;}
+  const{error}=await _sb.auth.updateUser({password:pwd});
+  if(error){err.textContent=error.message;return;}
+  document.getElementById('loginModal').classList.remove('open');
+  document.getElementById('lNewPwdSection').style.display='none';
+  document.getElementById('lLoginSection').style.display='block';
+  alert('Mot de passe mis à jour !');
+}
+_sb.auth.onAuthStateChange((event,session)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    document.getElementById('lLoginSection').style.display='none';
+    document.getElementById('lResetSection').style.display='none';
+    document.getElementById('lNewPwdSection').style.display='block';
+    document.getElementById('loginModal').classList.add('open');
+  }
+});
 
 // ── Init ──────────────────────────────────────────────────────
 renderCards();
