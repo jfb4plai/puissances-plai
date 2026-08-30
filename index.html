@@ -206,8 +206,19 @@ header h1{color:#fff;font-size:1.1rem;flex:1}
         <button class="btn-cl" onclick="closeLogin()">Annuler</button>
         <button class="btn-ok" onclick="doLogin()">Connexion</button>
       </div>
-      <div style="text-align:center;margin-top:8px">
+      <div style="text-align:center;margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        <button style="font-size:12px;background:none;border:none;color:#6b7280;cursor:pointer;text-decoration:underline" onclick="showSignupSection()">Pas encore de compte ? Créer un compte</button>
         <button style="font-size:12px;background:none;border:none;color:#6b7280;cursor:pointer;text-decoration:underline" onclick="showResetSection()">Mot de passe oublié ?</button>
+      </div>
+    </div>
+    <div id="lSignupSection" style="display:none">
+      <p style="font-size:13px;color:#6b7280;margin-bottom:10px">Crée ton compte enseignant PLAI. Il te servira pour toutes les apps PLAI qui utilisent la même connexion.</p>
+      <input type="email" id="lSuEmail" placeholder="Email professionnel (ex. prenom.nom@ecole.be)">
+      <input type="password" id="lSuPwd" placeholder="Mot de passe (6 caractères minimum)" onkeydown="if(event.key==='Enter')doSignup()">
+      <div class="m-err" id="lSuMsg"></div>
+      <div class="m-btns">
+        <button class="btn-cl" onclick="hideSignupSection()">Retour</button>
+        <button class="btn-ok" onclick="doSignup()">Créer le compte</button>
       </div>
     </div>
     <div id="lResetSection" style="display:none">
@@ -506,6 +517,34 @@ function showResetSection(){
 function hideResetSection(){
   document.getElementById('lResetSection').style.display='none';
   document.getElementById('lLoginSection').style.display='block';
+}
+function showSignupSection(){
+  document.getElementById('lLoginSection').style.display='none';
+  document.getElementById('lSignupSection').style.display='block';
+  document.getElementById('lSuEmail').value=document.getElementById('lEmail').value;
+}
+function hideSignupSection(){
+  document.getElementById('lSignupSection').style.display='none';
+  document.getElementById('lLoginSection').style.display='block';
+}
+async function doSignup(){
+  const e=document.getElementById('lSuEmail').value.trim();
+  const p=document.getElementById('lSuPwd').value;
+  const msg=document.getElementById('lSuMsg'); msg.style.color='#dc2626';
+  if(!e||!p){ msg.textContent='Email et mot de passe requis.'; return; }
+  if(p.length<6){ msg.textContent='Mot de passe : 6 caractères minimum.'; return; }
+  const {data,error}=await _sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:window.location.href}});
+  if(error){ msg.textContent=error.message; return; }
+  if(data.session){
+    closeLogin();
+    document.getElementById('lSignupSection').style.display='none';
+    document.getElementById('lLoginSection').style.display='block';
+    document.getElementById('tPanel').classList.add('open');
+    renderChks();
+  } else {
+    msg.style.color='#059669';
+    msg.textContent='Compte créé. Vérifie ta boîte mail pour confirmer, puis connecte-toi.';
+  }
 }
 async function sendReset(){
   const email=document.getElementById('lResetEmail').value.trim();
